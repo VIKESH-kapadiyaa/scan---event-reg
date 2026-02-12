@@ -143,23 +143,42 @@ export default function App() {
         }
       } catch (err) {
         console.error("Error requesting camera permissions:", err);
-        // Continue to try scanning, as webview might handle it differently
       }
     }
 
     setIsScannerActive(true);
+
+    // Slight delay to ensure DOM element exists
     setTimeout(() => {
-      scannerRef.current = new Html5QrcodeScanner("reader", {
-        fps: 20,
-        qrbox: { width: 250, height: 250 },
+      const html5QrCode = new Html5Qrcode("reader");
+      scannerRef.current = html5QrCode;
+
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+      // Prefer back camera ("environment")
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => {
+        console.error("Error starting scanner:", err);
+        setIsScannerActive(false);
+        alert("Failed to start camera. Please ensure permissions are granted.");
       });
-      scannerRef.current.render(onScanSuccess, onScanFailure);
     }, 100);
   };
 
   const stopScanner = () => {
     if (scannerRef.current) {
-      scannerRef.current.clear().catch(() => { });
+      scannerRef.current.stop().then(() => {
+        scannerRef.current.clear();
+        setIsScannerActive(false);
+      }).catch(err => {
+        console.error("Failed to stop scanner", err);
+        setIsScannerActive(false);
+      });
+    } else {
       setIsScannerActive(false);
     }
   };
@@ -225,7 +244,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="relative z-10 p-6 max-w-xl mx-auto pt-10 pb-24">
+      <main className="relative z-10 p-6 max-w-xl mx-auto pt-4 pb-24 flex flex-col justify-center min-h-[calc(100vh-140px)]">
 
         {/* Step 1: Data Initialization */}
         {attendees.length === 0 && (
@@ -289,14 +308,17 @@ export default function App() {
                 </div>
               </motion.div>
             ) : (
-              <div className="relative rounded-[50px] overflow-hidden bg-[#344E41] border-[12px] border-white shadow-2xl">
-                <div id="reader" className="w-full overflow-hidden"></div>
+              <div className="relative rounded-[50px] overflow-hidden bg-[#344E41] border-[12px] border-white shadow-2xl aspect-[3/4]">
+                <div id="reader" className="w-full h-full object-cover"></div>
                 <button
                   onClick={stopScanner}
-                  className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white p-2.5 rounded-full hover:bg-white/40 transition-all"
+                  className="absolute top-4 right-4 z-50 bg-white/20 backdrop-blur-md text-white p-2.5 rounded-full hover:bg-white/40 transition-all"
                 >
                   <X size={20} />
                 </button>
+                <div className="absolute bottom-8 left-0 right-0 text-center pointer-events-none">
+                  <p className="text-white/80 text-xs uppercase tracking-widest font-bold">Align QR Code</p>
+                </div>
               </div>
             )}
 
