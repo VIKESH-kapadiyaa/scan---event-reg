@@ -12,13 +12,7 @@ import * as XLSX from 'xlsx';
 import { HardcodedAttendees } from './data/HardcodedAttendees';
 
 export default function App() {
-  // Pre-load hardcoded attendees properly formatted
-  const initialAttendees = Object.entries(HardcodedAttendees).map(([id, name]) => ({
-    registration_id: id,
-    display_name: name
-  }));
-
-  const [attendees, setAttendees] = useState(initialAttendees);
+  const [attendees, setAttendees] = useState([]);
   const [scanStatus, setScanStatus] = useState('idle'); // idle, success, error
   const [matchedUser, setMatchedUser] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
