@@ -9,8 +9,16 @@ import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
+import { HardcodedAttendees } from './data/HardcodedAttendees';
+
 export default function App() {
-  const [attendees, setAttendees] = useState([]);
+  // Pre-load hardcoded attendees properly formatted
+  const initialAttendees = Object.entries(HardcodedAttendees).map(([id, name]) => ({
+    registration_id: id,
+    display_name: name
+  }));
+
+  const [attendees, setAttendees] = useState(initialAttendees);
   const [scanStatus, setScanStatus] = useState('idle'); // idle, success, error
   const [matchedUser, setMatchedUser] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
@@ -211,6 +219,17 @@ export default function App() {
       setMatchedUser(found);
       setScanStatus('success');
     } else {
+      // Fallback: Check hardcoded data
+      if (HardcodedAttendees[cleanDecoded]) {
+        setMatchedUser({
+          registration_id: cleanDecoded,
+          display_name: HardcodedAttendees[cleanDecoded]
+        });
+        setScanStatus('success');
+        stopScanner();
+        return;
+      }
+
       // DEBUG: Show what was actually scanned vs what is in data
       const sampleId = attendees.length > 0
         ? (attendees[0].registration_id || attendees[0].RegistrationID || 'N/A')
