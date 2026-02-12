@@ -3,44 +3,30 @@ import { Camera, Upload, CheckCircle2, AlertCircle, X, Scan, ShieldCheck, FileSp
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-// External Scripts for Parsing and Scanning
-const SCRIPTS = [
-  'https://unpkg.com/html5-qrcode',
-  'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
-];
+import { Capacitor } from '@capacitor/core';
+import { Camera as CapacitorCamera } from '@capacitor/camera';
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 export default function App() {
   const [attendees, setAttendees] = useState([]);
   const [scanStatus, setScanStatus] = useState('idle'); // idle, success, error
   const [matchedUser, setMatchedUser] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
-  const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const scannerRef = useRef(null);
 
   // New state for manual text entry
   const [manualData, setManualData] = useState("");
   const [showManualEntry, setShowManualEntry] = useState(false);
 
-  useEffect(() => {
-    let loadedCount = 0;
-    SCRIPTS.forEach(src => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => {
-        loadedCount++;
-        if (loadedCount === SCRIPTS.length) setScriptsLoaded(true);
-      };
-      document.body.appendChild(script);
-    });
-  }, []);
+  // Removed useEffect for script loading
 
   const handleManualSubmit = () => {
     if (!manualData.trim()) return;
 
     // Auto-detect CSV-like structure or just simple list
-    const parsedData = window.Papa.parse(manualData, {
+    const parsedData = Papa.parse(manualData, {
       header: true,
       skipEmptyLines: true
     });
@@ -64,7 +50,7 @@ export default function App() {
     const extension = file.name.split('.').pop().toLowerCase();
 
     if (extension === 'csv') {
-      window.Papa.parse(file, {
+      Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => setAttendees(results.data)
@@ -73,9 +59,9 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = (evt) => {
         const bstr = evt.target.result;
-        const wb = window.XLSX.read(bstr, { type: 'binary' });
+        const wb = XLSX.read(bstr, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        setAttendees(window.XLSX.utils.sheet_to_json(ws));
+        setAttendees(XLSX.utils.sheet_to_json(ws));
       };
       reader.readAsBinaryString(file);
     } else if (extension === 'pdf') {
@@ -132,7 +118,7 @@ export default function App() {
     if (!file) return;
 
     try {
-      const html5QrCode = new window.Html5Qrcode("qr-file-reader");
+      const html5QrCode = new Html5Qrcode("qr-file-reader");
       const decodedText = await html5QrCode.scanFile(file, true);
       onScanSuccess(decodedText);
     } catch (err) {
@@ -143,10 +129,27 @@ export default function App() {
     }
   };
 
-  const startScanner = () => {
+  const startScanner = async () => {
+    // Check for native platform permissions
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permissions = await CapacitorCamera.checkPermissions();
+        if (permissions.camera !== 'granted') {
+          const request = await CapacitorCamera.requestPermissions({ permissions: ['camera'] });
+          if (request.camera !== 'granted') {
+            alert('Camera permission is required to scan QR codes.');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Error requesting camera permissions:", err);
+        // Continue to try scanning, as webview might handle it differently
+      }
+    }
+
     setIsScannerActive(true);
     setTimeout(() => {
-      scannerRef.current = new window.Html5QrcodeScanner("reader", {
+      scannerRef.current = new Html5QrcodeScanner("reader", {
         fps: 20,
         qrbox: { width: 250, height: 250 },
       });
@@ -190,16 +193,8 @@ export default function App() {
     startScanner();
   };
 
-  if (!scriptsLoaded) {
-    return (
-      <div className="min-h-screen bg-[#FDFCF0] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Sprout className="text-[#588157] animate-bounce" size={40} />
-          <p className="text-[#3A5A40] font-serif italic">Preparing the Arena...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed loading check
+
 
   return (
     <div className="min-h-screen bg-[#FDFCF0] text-[#344E41] font-sans selection:bg-[#A3B18A]/30 relative overflow-x-hidden">
