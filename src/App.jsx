@@ -184,13 +184,25 @@ export default function App() {
   };
 
   const onScanSuccess = (decodedText) => {
-    const found = attendees.find(u => {
-      // Direct ID match for CSV/Excel
-      const id = u.registration_id || u.RegistrationID || u.registration_ID || u.id;
-      if (id && String(id).trim() === String(decodedText).trim()) return true;
+    const normalize = (str) => String(str || '').trim().toLowerCase();
+    const cleanDecoded = normalize(decodedText);
 
-      // Fuzzy search in raw content (for PDFs)
-      if (u.raw_content && u.raw_content.includes(String(decodedText).trim())) return true;
+    const found = attendees.find(u => {
+      // Get ID from various possible keys
+      const rawId = u.registration_id || u.RegistrationID || u.registration_ID || u.id;
+      if (!rawId && !u.raw_content) return false;
+
+      // Normalization check
+      const cleanId = normalize(rawId);
+
+      // 1. Exact match (normalized)
+      if (cleanId === cleanDecoded) return true;
+
+      // 2. Substring match (robustness for hidden chars or prefixes)
+      if (cleanId.includes(cleanDecoded) || cleanDecoded.includes(cleanId)) return true;
+
+      // 3. Fuzzy search in raw PDF content
+      if (u.raw_content && normalize(u.raw_content).includes(cleanDecoded)) return true;
 
       return false;
     });
@@ -199,6 +211,13 @@ export default function App() {
       setMatchedUser(found);
       setScanStatus('success');
     } else {
+      // DEBUG: Show what was actually scanned vs what is in data
+      const sampleId = attendees.length > 0
+        ? (attendees[0].registration_id || attendees[0].RegistrationID || 'N/A')
+        : 'Empty List';
+
+      alert(`DEBUG: Scan Mismatch\n\nScanned: "${decodedText}"\nNormalized: "${cleanDecoded}"\n\nAttendees Loaded: ${attendees.length}\nSample ID[0]: "${sampleId}"\n\nPlease check for extra spaces or case differences.`);
+
       setScanStatus('error');
     }
     stopScanner();
@@ -216,7 +235,7 @@ export default function App() {
 
 
   return (
-    <div className="min-h-screen bg-[#FDFCF0] text-[#344E41] font-sans selection:bg-[#A3B18A]/30 relative overflow-x-hidden">
+    <div className="min-h-[100dvh] flex flex-col bg-[#FDFCF0] text-[#344E41] font-sans selection:bg-[#A3B18A]/30 relative overflow-hidden">
 
       {/* Organic Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
@@ -225,7 +244,7 @@ export default function App() {
       </div>
 
       {/* Header */}
-      <nav className="sticky top-0 z-30 bg-[#FDFCF0]/70 backdrop-blur-md border-b border-[#A3B18A]/20 p-5">
+      <nav className="flex-none sticky top-0 z-30 bg-[#FDFCF0]/70 backdrop-blur-md border-b border-[#A3B18A]/20 p-5">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="p-2.5 bg-[#588157] rounded-2xl shadow-lg shadow-[#3A5A40]/10">
@@ -244,7 +263,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="relative z-10 p-6 max-w-xl mx-auto pt-4 pb-24 flex flex-col justify-center min-h-[calc(100vh-140px)]">
+      <main className="flex-1 relative z-10 p-6 max-w-xl mx-auto flex flex-col justify-center w-full">
 
         {/* Step 1: Data Initialization */}
         {attendees.length === 0 && (
@@ -403,7 +422,7 @@ export default function App() {
 
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-8 text-center z-20 pointer-events-none">
+      <footer className="flex-none relative p-8 text-center z-20 pointer-events-none">
         <div className="inline-flex items-center gap-4 bg-white/40 backdrop-blur-md px-8 py-3 rounded-full border border-[#A3B18A]/30 shadow-sm">
           <span className="text-[10px] font-bold text-[#344E41]/40 uppercase tracking-[0.4em]">07 FEB 2026 // ALGO ARENA // ENGINEERING BLOCK</span>
         </div>
