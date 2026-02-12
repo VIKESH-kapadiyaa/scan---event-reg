@@ -294,7 +294,7 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center bg-white/80 border border-[#A3B18A]/30 backdrop-blur-sm rounded-[40px] p-12 shadow-xl"
+                className="text-center bg-white/80 border border-[#A3B18A]/30 backdrop-blur-sm rounded-[30px] p-8 shadow-xl"
               >
                 <div className="mb-10 flex justify-center">
                   <div className="relative">
@@ -358,35 +358,35 @@ export default function App() {
           {scanStatus === 'success' && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFCF0]/90 backdrop-blur-xl p-6"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFCF0]/90 backdrop-blur-xl p-4"
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="w-full max-w-sm bg-white border border-[#A3B18A]/30 rounded-[50px] p-8 text-center shadow-2xl"
+                className="w-full max-w-[90%] bg-white border border-[#A3B18A]/30 rounded-[40px] p-6 text-center shadow-2xl"
               >
-                <div className="mb-8 inline-flex p-6 bg-[#F3F4F0] rounded-full text-[#588157]">
-                  <ShieldCheck size={64} />
+                <div className="mb-6 inline-flex p-5 bg-[#F3F4F0] rounded-full text-[#588157]">
+                  <ShieldCheck size={48} />
                 </div>
-                <h2 className="text-4xl font-serif font-bold text-[#344E41] mb-2 tracking-tight">Verified</h2>
-                <p className="text-[#588157] font-medium text-xs uppercase tracking-widest mb-10 italic">Welcome to the Arena</p>
+                <h2 className="text-3xl font-serif font-bold text-[#344E41] mb-2 tracking-tight">Verified</h2>
+                <p className="text-[#588157] font-medium text-[10px] uppercase tracking-widest mb-8 italic">Welcome to the Arena</p>
 
-                <div className="bg-[#FDFCF0] p-8 rounded-[40px] text-left border border-[#A3B18A]/20 mb-10 shadow-inner">
-                  <div className="mb-6">
-                    <span className="text-[10px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-2">Guest</span>
-                    <span className="text-2xl font-serif font-bold text-[#344E41]">{matchedUser?.attendee_name || matchedUser?.Name}</span>
+                <div className="bg-[#FDFCF0] p-6 rounded-[30px] text-left border border-[#A3B18A]/20 mb-8 shadow-inner">
+                  <div className="mb-4">
+                    <span className="text-[9px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-1">Guest</span>
+                    <span className="text-xl font-serif font-bold text-[#344E41] line-clamp-2">{matchedUser?.display_name}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-2">ID Reference</span>
-                      <span className="text-xs font-mono text-[#588157] bg-[#588157]/10 px-3 py-1 rounded-full">{matchedUser?.registration_id || matchedUser?.RegistrationID || 'ARENA_MEMBER'}</span>
+                      <span className="text-[9px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-1">ID Reference</span>
+                      <span className="text-[10px] font-mono text-[#588157] bg-[#588157]/10 px-2 py-1 rounded-full">{matchedUser?.registration_id || matchedUser?.RegistrationID || matchedUser?.id || 'ARENA_MEMBER'}</span>
                     </div>
-                    <Leaf className="text-[#A3B18A]/40" size={24} />
+                    <Leaf className="text-[#A3B18A]/40" size={20} />
                   </div>
                 </div>
 
                 <button
                   onClick={resetScanner}
-                  className="w-full py-5 bg-[#344E41] text-[#FDFCF0] rounded-full font-bold text-lg hover:shadow-xl transition-all"
+                  className="w-full py-4 bg-[#344E41] text-[#FDFCF0] rounded-full font-bold text-base hover:shadow-xl transition-all"
                 >
                   NEXT GUEST
                 </button>
@@ -397,21 +397,21 @@ export default function App() {
           {scanStatus === 'error' && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-[#588157]/10 backdrop-blur-xl p-6"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-[#588157]/10 backdrop-blur-xl p-4"
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="w-full max-w-sm bg-white border border-[#A3B18A]/30 rounded-[50px] p-10 text-center shadow-2xl"
+                className="w-full max-w-[90%] bg-white border border-[#A3B18A]/30 rounded-[40px] p-8 text-center shadow-2xl"
               >
-                <div className="mb-8 inline-flex p-6 bg-red-50 rounded-full text-red-400">
-                  <AlertCircle size={64} />
+                <div className="mb-6 inline-flex p-5 bg-red-50 rounded-full text-red-400">
+                  <AlertCircle size={48} />
                 </div>
-                <h2 className="text-3xl font-serif font-bold text-[#344E41] mb-2">Unknown Seed</h2>
-                <p className="text-red-400 font-bold text-[10px] uppercase tracking-widest mb-10">Verification Failed</p>
+                <h2 className="text-2xl font-serif font-bold text-[#344E41] mb-2">Unknown Seed</h2>
+                <p className="text-red-400 font-bold text-[10px] uppercase tracking-widest mb-8">Verification Failed</p>
 
                 <button
                   onClick={resetScanner}
-                  className="w-full py-5 bg-red-500 text-white rounded-full font-bold text-lg hover:bg-red-600 transition-all"
+                  className="w-full py-4 bg-red-500 text-white rounded-full font-bold text-base hover:bg-red-600 transition-all"
                 >
                   RE-SCAN
                 </button>
