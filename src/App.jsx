@@ -370,10 +370,10 @@ export default function App() {
 
                 <div className="bg-[#588157]/5 p-6 rounded-[30px] text-left border border-[#A3B18A]/10">
                   <div className="mb-4">
-                    <span className="text-[10px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-1">Guest Name</span>
-                    <span className="text-2xl font-serif font-bold text-[#344E41] line-clamp-2 leading-tight">{matchedUser?.display_name}</span>
+                    <span className="text-xs font-bold text-[#A3B18A] uppercase tracking-widest block mb-2">Guest Name</span>
+                    <span className="text-4xl font-serif font-bold text-[#344E41] leading-tight block">{matchedUser?.display_name}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-[#A3B18A]/10">
+                  <div className="flex items-center justify-between pt-6 border-t border-[#A3B18A]/10 mt-4">
                     <div>
                       <span className="text-[10px] font-bold text-[#A3B18A] uppercase tracking-widest block mb-1">ID Reference</span>
                       <span className="text-xs font-mono font-bold text-[#588157] bg-[#FFFFFF] px-3 py-1.5 rounded-full shadow-sm">{matchedUser?.registration_id || matchedUser?.RegistrationID || matchedUser?.id || 'ARENA_MEMBER'}</span>
