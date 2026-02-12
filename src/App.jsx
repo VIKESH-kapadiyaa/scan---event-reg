@@ -234,95 +234,93 @@ export default function App() {
   // Removed loading check
 
 
+  // Helper for triggering file upload from bottom bar
+  const fileInputRef = useRef(null);
+
+  const handlePlusClick = () => {
+    if (attendees.length === 0) {
+      fileInputRef.current?.click();
+    } else {
+      if (isScannerActive) {
+        stopScanner();
+      } else {
+        startScanner();
+      }
+    }
+  };
+
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#FDFCF0] text-[#344E41] font-sans selection:bg-[#A3B18A]/30 relative overflow-hidden">
+    <div className="h-[100dvh] bg-[#FDFCF0] text-[#344E41] font-sans selection:bg-[#A3B18A]/30 flex flex-col overflow-hidden relative">
 
       {/* Organic Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-[#A3B18A]/20 rounded-full blur-[80px]"></div>
-        <div className="absolute bottom-[10%] left-[-10%] w-[350px] h-[350px] bg-[#DAD7CD]/40 rounded-full blur-[100px]"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#A3B18A]/10 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#DAD7CD]/30 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* Header */}
-      <nav className="flex-none sticky top-0 z-30 bg-[#FDFCF0]/80 backdrop-blur-md border-b border-[#A3B18A]/20 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#588157] rounded-2xl shadow-lg shadow-[#3A5A40]/10">
-              <Trees className="text-[#FDFCF0]" size={28} />
-            </div>
-            <div>
-              <h1 className="font-serif font-bold text-[#344E41] text-2xl tracking-tight">Algo Arena <span className="text-[#588157] font-sans italic">1.0</span></h1>
-              <p className="text-[10px] text-[#A3B18A] font-bold uppercase tracking-[0.2em]">NextGenX // IILM</p>
-            </div>
-          </div>
-          <div className="bg-[#DAD7CD]/30 px-4 py-2 rounded-full border border-[#A3B18A]/20 shadow-sm">
-            <span className="text-xs font-bold text-[#588157] flex items-center gap-1">
-              <Sprout size={14} className="fill-[#588157]" />
-              {attendees.length} <span className="opacity-60 font-normal">Seeds</span>
-            </span>
-          </div>
-        </div>
-      </nav>
+      {/* Top Status Bar Placeholder (Visual Spacer) */}
+      <div className="flex-none h-12 w-full z-10"></div>
 
-      <main className="flex-1 relative z-10 p-6 max-w-xl mx-auto flex flex-col justify-center w-full">
+      {/* Main Content Area - Scrollable */}
+      <main className="flex-1 relative z-10 flex flex-col justify-center items-center w-full max-w-lg mx-auto p-6 pb-32">
 
-        {/* Step 1: Data Initialization */}
-        {attendees.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-[90%] mx-auto bg-white/80 border border-[#A3B18A]/30 backdrop-blur-sm rounded-[40px] p-8 text-center shadow-xl shadow-[#3A5A40]/5 flex flex-col items-center gap-6"
-          >
-            <div className="p-6 bg-[#F3F4F0] rounded-[30px] text-[#588157] shadow-inner">
-              <FileSpreadsheet size={56} strokeWidth={1.5} />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-3xl font-serif font-bold text-[#344E41]">Begin the Harvest</h2>
-              <p className="text-[#588157]/80 text-base leading-relaxed font-medium">
-                Upload your participant list to start welcoming people to the Arena.
-              </p>
-            </div>
+        {/* Home View: Begin Harvest or Scanner */}
+        <AnimatePresence mode="wait">
+          {attendees.length === 0 ? (
+            <motion.div
+              key="upload-card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full bg-white border border-[#A3B18A]/20 rounded-[40px] p-8 text-center shadow-2xl shadow-[#3A5A40]/5 flex flex-col items-center gap-6"
+            >
+              <div className="p-6 bg-[#F3F4F0] rounded-[30px] text-[#588157] shadow-inner">
+                <FileSpreadsheet size={48} strokeWidth={1.5} />
+              </div>
+              <div className="space-y-3">
+                <h2 className="text-3xl font-serif font-bold text-[#344E41]">Begin the Harvest</h2>
+                <p className="text-[#588157]/80 text-base leading-relaxed font-medium">
+                  Upload your participant list to start welcoming people to the Arena.
+                </p>
+              </div>
 
-            <label className="group relative cursor-pointer w-full h-16 bg-[#344E41] text-[#FDFCF0] rounded-3xl font-bold text-lg hover:bg-[#2A3C33] active:scale-[0.98] transition-all shadow-lg shadow-[#344E41]/20 flex items-center justify-center gap-3">
-              <Upload size={24} />
-              UPLOAD LIST
-              <input type="file" className="hidden" accept=".csv, .xlsx, .xls, .pdf" onChange={handleFileUpload} />
-            </label>
-          </motion.div>
-        )}
-
-        {/* Step 2: Live Scanning Control */}
-        {attendees.length > 0 && scanStatus === 'idle' && (
-          <div className="space-y-10">
-            {!isScannerActive ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-[90%] mx-auto text-center bg-white/80 border border-[#A3B18A]/30 backdrop-blur-sm rounded-[40px] p-8 shadow-xl flex flex-col items-center gap-6"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-[#588157]/10 rounded-full blur-2xl animate-pulse"></div>
-                  <div className="relative w-24 h-24 bg-[#F3F4F0] rounded-full flex items-center justify-center shadow-inner">
-                    <Camera className="text-[#588157]" size={40} />
+              <label className="group relative cursor-pointer w-full h-16 bg-[#344E41] text-[#FDFCF0] rounded-3xl font-bold text-lg hover:bg-[#2A3C33] active:scale-[0.98] transition-all shadow-lg shadow-[#344E41]/20 flex items-center justify-center gap-3">
+                <Upload size={24} />
+                UPLOAD LIST
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".csv, .xlsx, .xls, .pdf"
+                  onChange={handleFileUpload}
+                />
+              </label>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="scanner-card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full bg-white border border-[#A3B18A]/20 rounded-[40px] overflow-hidden shadow-2xl shadow-[#3A5A40]/5 relative"
+            >
+              {!isScannerActive ? (
+                <div className="p-8 text-center flex flex-col items-center gap-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-[#588157]/10 rounded-full blur-2xl animate-pulse"></div>
+                    <div className="relative w-24 h-24 bg-[#F3F4F0] rounded-full flex items-center justify-center shadow-inner">
+                      <Camera className="text-[#588157]" size={40} />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-serif font-bold text-[#344E41]">Scanner Dormant</h3>
-                  <p className="text-[#588157]/80 text-base font-medium">Ready to verify incoming guests.</p>
-                </div>
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-serif font-bold text-[#344E41]">Scanner Dormant</h3>
+                    <p className="text-[#588157]/80 text-base font-medium">Tap the + button to start.</p>
+                  </div>
 
-                <div className="w-full flex flex-col gap-3">
-                  <button
-                    onClick={startScanner}
-                    className="w-full h-16 bg-[#588157] text-[#FDFCF0] rounded-3xl font-bold text-lg shadow-lg shadow-[#588157]/20 hover:bg-[#3A5A40] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                  >
-                    <Camera size={24} />
-                    START CAMERA
-                  </button>
-                  <label className="cursor-pointer w-full h-16 bg-[#DAD7CD]/50 text-[#344E41] rounded-3xl font-bold text-lg hover:bg-[#DAD7CD] active:scale-[0.98] transition-all flex items-center justify-center gap-3 border border-[#A3B18A]/10">
-                    <ImageIcon size={24} />
-                    UPLOAD QR IMAGE
+                  <label className="cursor-pointer w-full h-14 bg-[#F3F4F0] text-[#344E41] rounded-2xl font-bold text-base hover:bg-[#EBECE5] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-[#A3B18A]/10 mt-2">
+                    <ImageIcon size={20} />
+                    Check Image
                     <input
                       type="file"
                       className="hidden"
@@ -331,40 +329,31 @@ export default function App() {
                     />
                   </label>
                 </div>
-              </motion.div>
-            ) : (
-              <div className="relative rounded-[50px] overflow-hidden bg-[#344E41] border-[12px] border-white shadow-2xl aspect-[3/4]">
-                <div id="reader" className="w-full h-full object-cover"></div>
-                <button
-                  onClick={stopScanner}
-                  className="absolute top-4 right-4 z-50 bg-white/20 backdrop-blur-md text-white p-2.5 rounded-full hover:bg-white/40 transition-all"
-                >
-                  <X size={20} />
-                </button>
-                <div className="absolute bottom-8 left-0 right-0 text-center pointer-events-none">
-                  <p className="text-white/80 text-xs uppercase tracking-widest font-bold">Align QR Code</p>
+              ) : (
+                <div className="relative aspect-[3/4] bg-black">
+                  <div id="reader" className="w-full h-full object-cover"></div>
+                  <div className="absolute inset-0 pointer-events-none border-[40px] border-black/50"></div>
+                  <button
+                    onClick={stopScanner}
+                    className="absolute top-4 right-4 z-50 bg-white/20 backdrop-blur-md text-white p-2 rounded-full"
+                  >
+                    <X size={20} />
+                  </button>
+                  <div className="absolute bottom-8 left-0 right-0 text-center pointer-events-none z-10">
+                    <p className="text-white/90 text-xs uppercase tracking-widest font-bold bg-black/40 inline-block px-3 py-1 rounded-full">Align Code</p>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Hidden Reader for File-based Scanning */}
-            <div id="qr-file-reader" className="hidden"></div>
-
-            <button
-              onClick={() => setAttendees([])}
-              className="w-full text-[#A3B18A] font-bold text-[10px] uppercase tracking-[0.2em] hover:text-[#588157] transition-colors"
-            >
-              <RotateCcw size={12} className="inline mr-2" /> Reset Master List
-            </button>
-          </div>
-        )}
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Global Overlays for Scan Results */}
         <AnimatePresence>
           {scanStatus === 'success' && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFCF0]/95 backdrop-blur-xl p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-[#FDFCF0]/95 backdrop-blur-xl p-4"
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -406,7 +395,7 @@ export default function App() {
           {scanStatus === 'error' && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-[#588157]/10 backdrop-blur-xl p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-[#588157]/10 backdrop-blur-xl p-4"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -436,13 +425,41 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* Hidden File Readers */}
+        <div id="qr-file-reader" className="hidden"></div>
+
       </main>
 
-      <footer className="flex-none relative p-8 text-center z-20 pointer-events-none">
-        <div className="inline-flex items-center gap-4 bg-white/40 backdrop-blur-md px-8 py-3 rounded-full border border-[#A3B18A]/30 shadow-sm">
-          <span className="text-[10px] font-bold text-[#344E41]/40 uppercase tracking-[0.4em]">07 FEB 2026 // ALGO ARENA // ENGINEERING BLOCK</span>
+      {/* Bottom Navigation Bar */}
+      <div className="flex-none relative z-50 pb-8 pt-2 px-6 bg-gradient-to-t from-[#FDFCF0] via-[#FDFCF0] to-transparent">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+
+          {/* Left: Home / Reset */}
+          <button
+            onClick={() => setAttendees([])}
+            className="p-4 rounded-full hover:bg-[#A3B18A]/10 text-[#344E41] transition-colors active:scale-95"
+          >
+            <Trees size={28} />
+          </button>
+
+          {/* Center: Main Action FAB */}
+          <button
+            onClick={handlePlusClick}
+            className="w-20 h-20 bg-[#344E41] rounded-full text-[#FDFCF0] shadow-xl shadow-[#344E41]/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all -mt-8 border-[6px] border-[#FDFCF0]"
+          >
+            {isScannerActive ? <X size={32} /> : <div className="text-4xl font-light mb-1">+</div>}
+          </button>
+
+          {/* Right: Stats Pill */}
+          <div className="bg-[#EBECE5] px-4 py-2.5 rounded-full flex items-center gap-2 border border-[#A3B18A]/10 shadow-sm">
+            <Sprout size={16} className="text-[#588157] fill-[#588157]" />
+            <span className="font-bold text-[#344E41] text-sm">{attendees.length}</span>
+            <span className="text-[#8A9A8B] text-xs font-medium">Seeds</span>
+          </div>
+
         </div>
-      </footer>
+      </div>
+
     </div>
   );
 }
