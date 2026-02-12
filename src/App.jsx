@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Upload, CheckCircle2, AlertCircle, X, Scan, ShieldCheck, FileSpreadsheet, RotateCcw, Leaf, Trees, Sprout, Wind } from 'lucide-react';
+import { Camera, Upload, CheckCircle2, AlertCircle, X, Scan, ShieldCheck, FileSpreadsheet, RotateCcw, Leaf, Trees, Sprout, Wind, Image as ImageIcon } from 'lucide-react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 // External Scripts for Parsing and Scanning
@@ -31,7 +32,7 @@ export default function App() {
     });
   }, []);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const extension = file.name.split('.').pop().toLowerCase();
@@ -51,6 +52,68 @@ export default function App() {
         setAttendees(window.XLSX.utils.sheet_to_json(ws));
       };
       reader.readAsBinaryString(file);
+    } else if (extension === 'pdf') {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = await import('pdfjs-dist/build/pdf');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let extractedData = [];
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+
+          // Simple extraction strategy: assume tabular data where lines represent rows
+          // This is a basic implementation and might need refinement based on specific PDF structure
+          const pageText = textContent.items.map(item => item.str).join(' ');
+
+          // Attempt to find patterns that look like IDs and Names
+          // This is highly dependent on the PDF format.
+          // For now, we'll try to split by some delimiter or just store raw text if structure is complex
+          // A more robust approach would be to prompt user for column mapping or use a specific PDF table parser
+
+          // Heuristic: matching common patterns if possible, or just creating a raw entry
+          // For this demo, let's treat every non-empty line as a potential record if we were splitting by newline
+          // But pdf text extraction often loses newlines.
+
+          // Better approach for general PDF:
+          // push a generic object that might need manual verification if not structured
+          // OR: Just alert that PDF support matches exact strings found in the document
+
+          extractedData.push({ raw_content: pageText });
+        }
+
+        // Since PDF parsing is unstructured compared to CSV/Excel, 
+        // we might want to flag this or handle it differently. 
+        // For now, we will map the raw text to a structure the scanner can check against
+        // (i.e. if the scanned ID is present in the PDF text anywhere)
+
+        // Let's refine the "found" logic in onScanSuccess to search in raw_data if present
+        setAttendees(extractedData);
+        alert("PDF loaded. Note: PDF verification checks if the scanned ID exists anywhere in the document text.");
+
+      } catch (error) {
+        console.error("Error reading PDF:", error);
+        alert("Failed to parse PDF file.");
+      }
+    }
+  };
+
+  const handleQrImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const html5QrCode = new window.Html5Qrcode("qr-file-reader");
+      const decodedText = await html5QrCode.scanFile(file, true);
+      onScanSuccess(decodedText);
+    } catch (err) {
+      console.error("Error scanning file:", err);
+      // If we differ success/error states, we might want a specific error for "Invalid QR"
+      // For now, trigger the standard error state
+      setScanStatus('error');
     }
   };
 
@@ -74,8 +137,14 @@ export default function App() {
 
   const onScanSuccess = (decodedText) => {
     const found = attendees.find(u => {
+      // Direct ID match for CSV/Excel
       const id = u.registration_id || u.RegistrationID || u.registration_ID || u.id;
-      return String(id).trim() === String(decodedText).trim();
+      if (id && String(id).trim() === String(decodedText).trim()) return true;
+
+      // Fuzzy search in raw content (for PDFs)
+      if (u.raw_content && u.raw_content.includes(String(decodedText).trim())) return true;
+
+      return false;
     });
 
     if (found) {
@@ -154,7 +223,7 @@ export default function App() {
             <label className="group relative cursor-pointer inline-flex items-center gap-3 bg-[#3A5A40] text-[#FDFCF0] px-10 py-4 rounded-full font-bold hover:bg-[#588157] transition-all shadow-lg active:scale-95">
               <Upload size={20} />
               UPLOAD LIST
-              <input type="file" className="hidden" accept=".csv, .xlsx, .xls" onChange={handleFileUpload} />
+              <input type="file" className="hidden" accept=".csv, .xlsx, .xls, .pdf" onChange={handleFileUpload} />
             </label>
           </motion.div>
         )}
@@ -178,12 +247,25 @@ export default function App() {
                 </div>
                 <h3 className="text-xl font-serif font-bold text-[#344E41] mb-2">Scanner Dormant</h3>
                 <p className="text-[#588157]/70 text-sm mb-10 italic">Awaken the camera to verify guests.</p>
-                <button
-                  onClick={startScanner}
-                  className="w-full py-5 bg-[#588157] text-[#FDFCF0] rounded-full font-bold text-lg shadow-lg hover:bg-[#3A5A40] transition-all"
-                >
-                  START SCANNING
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={startScanner}
+                    className="w-full py-5 bg-[#588157] text-[#FDFCF0] rounded-full font-bold text-lg shadow-lg hover:bg-[#3A5A40] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Camera size={24} />
+                    START CAMERA
+                  </button>
+                  <label className="cursor-pointer w-full py-5 bg-[#DAD7CD] text-[#344E41] rounded-full font-bold text-lg shadow-lg hover:bg-[#A3B18A] transition-all flex items-center justify-center gap-2 relative overflow-hidden group">
+                    <ImageIcon size={24} />
+                    UPLOAD QR IMAGE
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleQrImageUpload}
+                    />
+                  </label>
+                </div>
               </motion.div>
             ) : (
               <div className="relative rounded-[50px] overflow-hidden bg-[#344E41] border-[12px] border-white shadow-2xl">
@@ -196,6 +278,9 @@ export default function App() {
                 </button>
               </div>
             )}
+
+            {/* Hidden Reader for File-based Scanning */}
+            <div id="qr-file-reader" className="hidden"></div>
 
             <button
               onClick={() => setAttendees([])}
